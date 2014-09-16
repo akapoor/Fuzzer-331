@@ -1,4 +1,4 @@
-package example.fuzzer;
+package core;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
