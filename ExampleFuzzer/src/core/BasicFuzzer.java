@@ -35,7 +35,7 @@ public class BasicFuzzer {
 		HtmlPage page = webClient.getPage("http://www.se.rit.edu/~swen-331/projects/fuzzer/");
 		List<HtmlAnchor> links = page.getAnchors();
 		for (HtmlAnchor link : links) {
-			if (link.getHrefAttribute().contains("../")) {
+			if (!link.getHrefAttribute().startsWith("http")) {		//Change links for different 
 				System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
 				onSiteLinks.add(link);
 			}
