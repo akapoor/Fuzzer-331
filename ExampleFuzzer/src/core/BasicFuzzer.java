@@ -29,7 +29,7 @@ public class BasicFuzzer {
 	 * @throws MalformedURLException
 	 */
 	private static void discoverLinks(WebClient webClient) throws IOException, MalformedURLException {
-		HtmlPage page = webClient.getPage("http://localhost:8080/bodgeit");
+		HtmlPage page = webClient.getPage("http://127.0.0.1 ");
 		List<HtmlAnchor> links = page.getAnchors();
 		for (HtmlAnchor link : links) {
 			System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
