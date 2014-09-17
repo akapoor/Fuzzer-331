@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -11,9 +12,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public class BasicFuzzer {
 	
@@ -22,7 +21,14 @@ public class BasicFuzzer {
 	public static void main(String[] args) throws MalformedURLException, IOException {
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
-		discoverLinks(webClient);
+		int inputType = getInputType();
+		if (inputType == 0) {
+			System.err.println("That is an invalid input");
+			System.exit(0);
+		}
+		else if (inputType == 1) {
+			discoverLinks(webClient);
+		}
 		doFormPost(webClient);
 		Authentication auth = new Authentication();
 		auth.submittingForm(webClient);
@@ -63,6 +69,27 @@ public class BasicFuzzer {
 			HtmlSubmitInput submit = (HtmlSubmitInput) form.getFirstByXPath("//input[@id='submit']");
 			System.out.println(submit.<HtmlPage> click().getWebResponse().getContentAsString());
 		}
+	}
+	
+	/**
+	 * This code finds the console input and determines if the fuzzer needs to discover or test the site
+	 * @return inputType
+	 */
+	private static int getInputType() {
+		int inputType = 0;
+		Scanner s = new Scanner(System.in);
+        String inputString = s.nextLine();
+        String[] inputs = inputString.split(" ");
+        if (!inputs[0].equals("fuzz")) {
+        	return inputType;
+        }
+        if (inputs[1].equals("discover")) {
+        	inputType = 1;
+        }
+        else if (inputs[2].equals("test")) {
+        	inputType = 2;
+        }
+        return inputType;
 	}
 	
 }
