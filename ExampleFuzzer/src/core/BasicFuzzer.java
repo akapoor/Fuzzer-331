@@ -17,11 +17,14 @@ import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 public class BasicFuzzer {
 	
 	private static ArrayList<HtmlAnchor> onSiteLinks = new ArrayList<HtmlAnchor>();
+	private static String url;
 
 	public static void main(String[] args) throws MalformedURLException, IOException {
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
-		int inputType = getInputType();
+		String[] input = getInput();
+		int inputType = getInputType(input);
+		url = getWebsite(webClient, input);
 		if (inputType == 0) {
 			System.err.println("That is an invalid input");
 			System.exit(0);
@@ -42,7 +45,7 @@ public class BasicFuzzer {
 	 * @throws MalformedURLException
 	 */
 	private static void discoverLinks(WebClient webClient) throws IOException, MalformedURLException {
-		HtmlPage page = webClient.getPage("http://www.se.rit.edu/~swen-331/projects/fuzzer/");
+		HtmlPage page = webClient.getPage(url);
 		List<HtmlAnchor> links = page.getAnchors();
 		for (HtmlAnchor link : links) {
 			if (!link.getHrefAttribute().startsWith("http")) {		//Change links for different 
@@ -71,25 +74,34 @@ public class BasicFuzzer {
 		}
 	}
 	
+	private static String[] getInput() {
+		Scanner s = new Scanner(System.in);
+        String inputString = s.nextLine();
+        return inputString.split(" ");
+        
+	}
+	
 	/**
 	 * This code finds the console input and determines if the fuzzer needs to discover or test the site
 	 * @return inputType
 	 */
-	private static int getInputType() {
+	private static int getInputType(String [] input) {
 		int inputType = 0;
-		Scanner s = new Scanner(System.in);
-        String inputString = s.nextLine();
-        String[] inputs = inputString.split(" ");
-        if (!inputs[0].equals("fuzz")) {
+		if (!input[0].equals("fuzz")) {
         	return inputType;
         }
-        if (inputs[1].equals("discover")) {
+        if (input[1].equals("discover")) {
         	inputType = 1;
         }
-        else if (inputs[2].equals("test")) {
+        else if (input[2].equals("test")) {
         	inputType = 2;
         }
         return inputType;
+	}
+	
+	private static String getWebsite(WebClient webClient, String[] input) throws FailingHttpStatusCodeException, IOException {
+		HtmlPage page = webClient.getPage(input[2]);
+		return input[2];
 	}
 	
 }
