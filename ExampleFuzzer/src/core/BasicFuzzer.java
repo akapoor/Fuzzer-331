@@ -11,17 +11,21 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public class BasicFuzzer {
 	
 	private static ArrayList<HtmlAnchor> onSiteLinks = new ArrayList<HtmlAnchor>();
 
-	public static void main(String[] args) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
+	public static void main(String[] args) throws MalformedURLException, IOException {
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
 		discoverLinks(webClient);
 		doFormPost(webClient);
+		Authentication auth = new Authentication();
+		auth.submittingForm(webClient);
 		webClient.closeAllWindows();
 	}
 
@@ -60,4 +64,5 @@ public class BasicFuzzer {
 			System.out.println(submit.<HtmlPage> click().getWebResponse().getContentAsString());
 		}
 	}
+	
 }
