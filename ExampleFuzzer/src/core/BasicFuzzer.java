@@ -1,5 +1,7 @@
 package core;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -16,20 +18,21 @@ import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 
 public class BasicFuzzer {
 	
-	private static ArrayList<HtmlAnchor> onSiteLinks = new ArrayList<HtmlAnchor>();
-	private static String url;
+	private static ArrayList<String> onSiteLinks = new ArrayList<String>();
+	private static HtmlPage page;
 
 	public static void main(String[] args) throws MalformedURLException, IOException {
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
 		int inputType = getInputType(args);
-		url = getWebsite(webClient, args);
+		getWebsite(webClient, args);
 		if (inputType == 0) {
 			System.err.println("That is an invalid input");
 			System.exit(0);
 		}
 		else if (inputType == 1) {
-			discoverLinks(webClient);
+			discoverLinks();
+			useRemainingParams(args, webClient);
 		}
 		doFormPost(webClient);
 		Authentication auth = new Authentication();
@@ -43,13 +46,12 @@ public class BasicFuzzer {
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	private static void discoverLinks(WebClient webClient) throws IOException, MalformedURLException {
-		HtmlPage page = webClient.getPage(url);
+	private static void discoverLinks() throws IOException, MalformedURLException {
 		List<HtmlAnchor> links = page.getAnchors();
 		for (HtmlAnchor link : links) {
 			if (!link.getHrefAttribute().startsWith("http")) {		//Change links for different 
 				System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
-				onSiteLinks.add(link);
+				onSiteLinks.add(link.getHrefLangAttribute());
 			}
 		}
 	}
@@ -91,9 +93,56 @@ public class BasicFuzzer {
         return inputType;
 	}
 	
-	private static String getWebsite(WebClient webClient, String[] input) throws FailingHttpStatusCodeException, IOException {
-		HtmlPage page = webClient.getPage(input[2]);
-		return input[2];
+	private static HtmlPage getWebsite(WebClient webClient, String[] input) throws FailingHttpStatusCodeException, IOException {
+		page = webClient.getPage(input[2]);
+		return page;
+	}
+	
+	private static void useRemainingParams(String[] args, WebClient webClient) {
+		for (String arg : args) {
+			if (arg.startsWith("--common-words=")) {
+				pageGuessingWithCommonWords(arg.substring(15), webClient);
+			}
+		}
+	}
+	
+	private static void pageGuessingWithCommonWords(String fileName, WebClient webClient)  {
+		try {
+			String pageUrl = page.getUrl().toString();
+			pageUrl = pageUrl.substring(0, pageUrl.lastIndexOf('/') + 1);
+			Scanner in = new Scanner(new FileReader(fileName));
+			while (in.hasNext()) {
+				String word = in.next();
+				String newUrl = pageUrl + word;
+				if (checkUrl(newUrl, webClient)) {
+					System.out.println("Unlinked Page Found: @URL=" + newUrl);
+				}
+				String phpUrl = newUrl + ".php";
+				if (checkUrl(phpUrl, webClient)) {
+					System.out.println("Unlinked Page Found: @URL=" + phpUrl);
+				}
+				String jspUrl = newUrl + ".jsp";
+				if (checkUrl(jspUrl, webClient)) {
+					System.out.println("Unlinked Page Found: @URL=" + jspUrl);
+				}
+			}
+			in.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private static boolean checkUrl(String pageUrl, WebClient webClient) {
+		try {
+			HtmlPage pageTest = webClient.getPage(pageUrl);
+			if (onSiteLinks.contains(pageTest.getUrl().toString())) {
+				return false;
+			}
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 	
 }
