@@ -22,9 +22,8 @@ public class BasicFuzzer {
 	public static void main(String[] args) throws MalformedURLException, IOException {
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
-		String[] input = getInput();
-		int inputType = getInputType(input);
-		url = getWebsite(webClient, input);
+		int inputType = getInputType(args);
+		url = getWebsite(webClient, args);
 		if (inputType == 0) {
 			System.err.println("That is an invalid input");
 			System.exit(0);
@@ -74,18 +73,11 @@ public class BasicFuzzer {
 		}
 	}
 	
-	private static String[] getInput() {
-		Scanner s = new Scanner(System.in);
-        String inputString = s.nextLine();
-        return inputString.split(" ");
-        
-	}
-	
 	/**
 	 * This code finds the console input and determines if the fuzzer needs to discover or test the site
 	 * @return inputType
 	 */
-	private static int getInputType(String [] input) {
+	private static int getInputType(String[] input) {
 		int inputType = 0;
 		if (!input[0].equals("fuzz")) {
         	return inputType;
