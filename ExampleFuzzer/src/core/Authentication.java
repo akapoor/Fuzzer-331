@@ -25,33 +25,44 @@ public class Authentication {
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	public void submittingForm(WebClient webClient) throws IOException, MalformedURLException  {
+	public void submittingForm(WebClient webClient, String name) throws IOException, MalformedURLException  {
 	    
-	    // Get the first page
-	    final HtmlPage page1 = webClient.getPage("http://127.0.0.1/dvwa/login.php");
+		if(name.equals("dwva")){
+			// Get the first page
+		    final HtmlPage page1 = webClient.getPage("http://127.0.0.1/dvwa/login.php");
 
-	    // Get the form that we are dealing with and within that form, 
-	    // find the submit button and the field that we want to change.
-	    
-	    final List<HtmlForm> fList = page1.getForms();
-	    
-	    final HtmlForm form = fList.get(0);
+		    // Get the form that we are dealing with and within that form, 
+		    // find the submit button and the field that we want to change.
+		    
+		    final List<HtmlForm> fList = page1.getForms();
+		    
+		    final HtmlForm form = fList.get(0);
 
-	    final HtmlSubmitInput button = form.getInputByName("Login");
-	    final HtmlTextInput userField = form.getInputByName("username");
-	    final HtmlPasswordInput passwordField = form.getInputByName("password");
-	    
-	    // Change the value of the text field
-	    userField.setValueAttribute("admin");
-	    passwordField.setValueAttribute("password");
+		    final HtmlSubmitInput button = form.getInputByName("Login");
+		    final HtmlTextInput userField = form.getInputByName("username");
+		    final HtmlPasswordInput passwordField = form.getInputByName("password");
+		    
+		    // Change the value of the text field
+		    userField.setValueAttribute("admin");
+		    passwordField.setValueAttribute("password");
 
-	    // Now submit the form by clicking the button and get back the second page.
-	    final HtmlPage page2 = button.click();
-	    System.out.println("************************Logged in*****************************");
-		List<HtmlAnchor> links = page2.getAnchors();
-		for (HtmlAnchor link : links) {
-			System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
-		}	
+		    // Now submit the form by clicking the button and get back the second page.
+		    final HtmlPage page2 = button.click();
+		    		    
+		    System.out.println("************************Logged in*****************************");
+			List<HtmlAnchor> links = page2.getAnchors();
+			for (HtmlAnchor link : links) {
+				System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
+			}	
+			/*
+			HtmlSubmitInput submit = (HtmlSubmitInput) form.getFirstByXPath("//input[@value='Login']");
+			submit.<HtmlPage> click().getWebResponse().getContentAsString();
+			*/
+		}
+		else if(name.equals("bodgeit")){
+			//log into 
+		}
+	    
 	}
 	
 }

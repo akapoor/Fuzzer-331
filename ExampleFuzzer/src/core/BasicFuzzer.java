@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -25,6 +26,7 @@ public class BasicFuzzer {
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
 		int inputType = getInputType(args);
+		
 		getWebsite(webClient, args);
 		if (inputType == 0) {
 			System.err.println("That is an invalid input");
@@ -32,11 +34,25 @@ public class BasicFuzzer {
 		}
 		else if (inputType == 1) {
 			discoverLinks();
-			useRemainingParams(args, webClient);
+			//useRemainingParams(args, webClient);
 		}
-		doFormPost(webClient);
+		
+		//Get the name of application to authenticate
+		String appName = "";
+		for(int i=0; i< args.length; i++){
+			if(args[i].contains("auth")){
+				appName = args[i].substring(14);
+				//System.out.println("Auth needed: "+appName);
+			}	
+		}
 		Authentication auth = new Authentication();
-		auth.submittingForm(webClient);
+		auth.submittingForm(webClient, appName); //authenticate app
+		
+		String path = "http://127.0.0.1/dvwa/vulnerabilities/sqli/";
+		InputDiscovery discoverInputs = new InputDiscovery();
+		discoverInputs.discover(webClient, path);
+		
+		doFormPost(webClient);
 		webClient.closeAllWindows();
 	}
 
