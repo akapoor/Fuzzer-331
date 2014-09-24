@@ -24,40 +24,29 @@ public class InputDiscovery {
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	public void discover(WebClient webClient, String url) throws IOException, MalformedURLException  {
+	public void discover(WebClient webClient, HtmlPage page) throws IOException, MalformedURLException  {
 		
-		
-		String link = url;//"http://127.0.0.1/dvwa/"+url;
-		final HtmlPage page = webClient.getPage(link);
-		System.out.println("Input Discovery for: "+ link);
+		System.out.println("	Input Discovery at "+ page);
 		
 		List<HtmlForm> forms = page.getForms(); //list of all forms on a page
 		for (HtmlForm form : forms) {
 			
 			for (HtmlElement e : form.getHtmlElementsByTagName("input"))
-				System.out.println("	Input discovered: " + e);
+				System.out.println("		Input discovered: " + e);
 
 			for (HtmlElement e : form.getHtmlElementsByTagName("textarea"))
-				System.out.println("	Input discovered " + e);
+				System.out.println("		Input discovered " + e);
 			
 			for (HtmlElement e : form.getHtmlElementsByTagName("password"))
-				System.out.println("	Input discovered " + e);
+				System.out.println("		Input discovered " + e);
 			
 			for (HtmlElement e : form.getHtmlElementsByTagName("text"))
-				System.out.println("	Input discovered " + e);
-			
-			/*
-			//Or comment out the for statements above and try this
-			final List<HtmlInput> input = (List<HtmlInput>) form.getByXPath("//input");
-            for(HtmlInput formInput: input){
-                    System.out.println(formInput);
-            }
-            */
+				System.out.println("		Input discovered " + e);
 		}
 		
 		//Find cookies
 		for (Cookie cookie : webClient.getCookieManager().getCookies()) {
-			System.out.println("	Cookie discovered: "  + cookie.toString());		
+			System.out.println("		Cookie discovered: "  + cookie.toString());		
 		}
 	}
 }

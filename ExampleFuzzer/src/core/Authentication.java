@@ -25,9 +25,10 @@ public class Authentication {
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	public void submittingForm(WebClient webClient, String name) throws IOException, MalformedURLException  {
+	public void logIn(WebClient webClient, String name) throws IOException, MalformedURLException  {
 	    
 		if(name.equals("dwva")){
+			System.out.println("Inside login");
 			// Get the first page
 		    final HtmlPage page1 = webClient.getPage("http://127.0.0.1/dvwa/login.php");
 
@@ -58,11 +59,11 @@ public class Authentication {
 			HtmlSubmitInput submit = (HtmlSubmitInput) form.getFirstByXPath("//input[@value='Login']");
 			submit.<HtmlPage> click().getWebResponse().getContentAsString();
 			*/
+			System.out.println("Exiting login method");
 		}
 		else if(name.equals("bodgeit")){
 			//log into 
 		}
-	    
 	}
 	
 }
