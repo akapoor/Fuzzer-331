@@ -19,21 +19,21 @@ import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 
 public class BasicFuzzer {
 	
-	private static ArrayList<String> onSiteLinks = new ArrayList<String>();
-	private static HtmlPage page;
+	private static ArrayList<HtmlPage> onSiteLinks = new ArrayList<HtmlPage>();
+	private static ArrayList<HtmlPage> visitedPages = new ArrayList<HtmlPage>();
 
 	public static void main(String[] args) throws MalformedURLException, IOException {
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
 		int inputType = getInputType(args);
 		
-		getWebsite(webClient, args);
+		HtmlPage page = getWebsite(webClient, args);
 		if (inputType == 0) {
 			System.err.println("That is an invalid input");
 			System.exit(0);
 		}
 		else if (inputType == 1) {
-			discoverLinks();
+			discoverLinks(webClient, page);
 			//useRemainingParams(args, webClient);
 		}
 		
@@ -52,6 +52,15 @@ public class BasicFuzzer {
 		InputDiscovery discoverInputs = new InputDiscovery();
 		discoverInputs.discover(webClient, path);
 		
+		for (HtmlPage htmlPage : onSiteLinks) {
+			if(!visitedPages.contains(onSiteLinks)) {
+				System.out.println("Searching page: " + htmlPage.getBaseURI());
+				visitedPages.add(htmlPage);
+				discoverLinks(webClient, htmlPage);
+				discoverInputs.discover(webClient, htmlPage.getBaseURI());
+			}
+		}
+		
 		doFormPost(webClient);
 		webClient.closeAllWindows();
 	}
@@ -62,12 +71,12 @@ public class BasicFuzzer {
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	private static void discoverLinks() throws IOException, MalformedURLException {
+	private static void discoverLinks(WebClient webClient, HtmlPage page) throws IOException, MalformedURLException {
 		List<HtmlAnchor> links = page.getAnchors();
 		for (HtmlAnchor link : links) {
 			if (!link.getHrefAttribute().startsWith("http")) {		//Change links for different 
 				System.out.println("Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
-				onSiteLinks.add(link.getHrefLangAttribute());
+				onSiteLinks.add((HtmlPage)webClient.getPage(link.asText()));
 			}
 		}
 	}
@@ -110,19 +119,21 @@ public class BasicFuzzer {
 	}
 	
 	private static HtmlPage getWebsite(WebClient webClient, String[] input) throws FailingHttpStatusCodeException, IOException {
-		page = webClient.getPage(input[2]);
+		HtmlPage page = webClient.getPage(input[2]);
+		onSiteLinks.add(page);
+		visitedPages.add(page);
 		return page;
 	}
 	
-	private static void useRemainingParams(String[] args, WebClient webClient) {
+	private static void useRemainingParams(String[] args, WebClient webClient, HtmlPage page) {
 		for (String arg : args) {
 			if (arg.startsWith("--common-words=")) {
-				pageGuessingWithCommonWords(arg.substring(15), webClient);
+				pageGuessingWithCommonWords(arg.substring(15), webClient, page);
 			}
 		}
 	}
 	
-	private static void pageGuessingWithCommonWords(String fileName, WebClient webClient)  {
+	private static void pageGuessingWithCommonWords(String fileName, WebClient webClient, HtmlPage page)  {
 		try {
 			String pageUrl = page.getUrl().toString();
 			pageUrl = pageUrl.substring(0, pageUrl.lastIndexOf('/') + 1);
@@ -131,19 +142,29 @@ public class BasicFuzzer {
 				String word = in.next();
 				String newUrl = pageUrl + word;
 				if (checkUrl(newUrl, webClient)) {
+					HtmlPage newPage = webClient.getPage(newUrl);
+					onSiteLinks.add(newPage);
 					System.out.println("Unlinked Page Found: @URL=" + newUrl);
 				}
 				String phpUrl = newUrl + ".php";
 				if (checkUrl(phpUrl, webClient)) {
+					HtmlPage newPage = webClient.getPage(phpUrl);
+					onSiteLinks.add(newPage);
 					System.out.println("Unlinked Page Found: @URL=" + phpUrl);
 				}
 				String jspUrl = newUrl + ".jsp";
 				if (checkUrl(jspUrl, webClient)) {
+					HtmlPage newPage = webClient.getPage(jspUrl);
+					onSiteLinks.add(newPage);
 					System.out.println("Unlinked Page Found: @URL=" + jspUrl);
 				}
 			}
 			in.close();
-		} catch (FileNotFoundException e) {
+		} catch (FailingHttpStatusCodeException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
