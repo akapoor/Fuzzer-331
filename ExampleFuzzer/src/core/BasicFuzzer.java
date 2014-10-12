@@ -45,7 +45,7 @@ public class BasicFuzzer {
 		else if (inputType == 1) {
 			System.out.println("Crawling page: http://127.0.0.1/");
 			discoverLinks(webClient, page);
-			useRemainingParams(args, webClient, page);
+			//useRemainingParams(args, webClient, page);
 		}
 				
 		//************************Authenticate*******************
@@ -74,7 +74,7 @@ public class BasicFuzzer {
 				visitedPages.add(htmlPage);
 				discoverLinks(webClient, htmlPage);
 				discoverInputs.discover(webClient, htmlPage);
-				useRemainingParams(args, webClient, htmlPage);
+				//useRemainingParams(args, webClient, htmlPage);
 			}
 			System.out.println("On site page " + onSiteLinks.size());
 		}
