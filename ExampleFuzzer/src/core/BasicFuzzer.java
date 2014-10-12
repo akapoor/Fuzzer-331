@@ -15,7 +15,6 @@ import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
@@ -25,24 +24,30 @@ public class BasicFuzzer {
 	
 	private static ArrayList<HtmlPage> onSiteLinks = new ArrayList<HtmlPage>();
 	private static ArrayList<HtmlPage> visitedPages = new ArrayList<HtmlPage>();
+	private static FuzzTester fTest;
 	
 	static HtmlAnchor dwvaLink = null;
 	static HtmlPage homePage = null;
 
 	public static void main(String[] args) throws MalformedURLException, IOException {
+		String currentUrl;
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
 		int inputType = getInputType(args);
 		webClient.getCookieManager().clearCookies();
 		
 		HtmlPage page = getWebsite(webClient, args); //construct HtmlPage from args
+		currentUrl = getPageUrl(page.toString());
 		
 		//***********************Discovery Links******************
 		if (inputType == 0) {
 			System.err.println("That is an invalid input");
 			System.exit(0);
 		}
-		else if (inputType == 1) {
+		else if (inputType == 1 || inputType == 2) {
+			if (inputType == 2) {
+				fTest = new FuzzTester();
+			}
 			System.out.println("Crawling page: http://127.0.0.1/");
 			discoverLinks(webClient, page);
 			//useRemainingParams(args, webClient, page);
@@ -69,11 +74,18 @@ public class BasicFuzzer {
 		ListIterator<HtmlPage> itr = onSiteLinks.listIterator();
 		while(itr.hasNext()){
 			HtmlPage htmlPage = itr.next();
+			currentUrl = getPageUrl(htmlPage.toString());
 			if(!visitedPages.contains(htmlPage)) {
 				System.out.println("\nCrawling page: " + htmlPage);
 				visitedPages.add(htmlPage);
 				discoverLinks(webClient, htmlPage);
 				discoverInputs.discover(webClient, htmlPage);
+				if (inputType == 2) {
+		        	int response = fTest.getHttpResponse(args[2]);
+		        	if (response < 200 || response > 299) {
+		        		System.out.println("Response Code for " + currentUrl + "is not OK! Code: " + response);
+		        	}
+				}
 				//useRemainingParams(args, webClient, htmlPage);
 			}
 			System.out.println("On site page " + onSiteLinks.size());
@@ -82,8 +94,12 @@ public class BasicFuzzer {
 		/*for (HtmlPage htmlPage : onSiteLinks) {
 			
 		}*/
-		doFormPost(webClient);
 		webClient.closeAllWindows();
+	}
+
+	private static String getPageUrl(String pageUrl) {
+		pageUrl = pageUrl.substring(pageUrl.indexOf("(") + 1, pageUrl.indexOf(")"));
+		return pageUrl;
 	}
 
 	/**
@@ -107,25 +123,6 @@ public class BasicFuzzer {
 			}
 		}
 	}
-
-	/**
-	 * This code is for demonstrating techniques for submitting an HTML form. Fuzzer code would need to be
-	 * more generalized
-	 * @param webClient
-	 * @throws FailingHttpStatusCodeException
-	 * @throws MalformedURLException
-	 * @throws IOException
-	 */
-	private static void doFormPost(WebClient webClient) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
-		HtmlPage page = webClient.getPage("http://www.se.rit.edu/~swen-331/projects/fuzzer/");
-		List<HtmlForm> forms = page.getForms();
-		for (HtmlForm form : forms) {
-			HtmlInput input = form.getInputByName("quantity");
-			input.setValueAttribute("2");
-			HtmlSubmitInput submit = (HtmlSubmitInput) form.getFirstByXPath("//input[@id='submit']");
-			System.out.println(submit.<HtmlPage> click().getWebResponse().getContentAsString());
-		}
-	}
 	
 	/**
 	 * This code finds the console input and determines if the fuzzer needs to discover or test the site
@@ -139,7 +136,7 @@ public class BasicFuzzer {
         if (input[1].equals("discover")) {
         	inputType = 1;
         }
-        else if (input[2].equals("test")) {
+        else if (input[1].equals("test")) {
         	inputType = 2;
         }
         return inputType;
