@@ -46,7 +46,7 @@ public class BasicFuzzer {
 		}
 		else if (inputType == 1 || inputType == 2) {
 			if (inputType == 2) {
-				fTest = new FuzzTester();
+				fTest = new FuzzTester(); //create the fuzz testing instance
 			}
 			System.out.println("Crawling page: http://127.0.0.1/");
 			discoverLinks(webClient, page);
@@ -65,30 +65,41 @@ public class BasicFuzzer {
 		
 		
 		//************************Input Discovery*****************
-		//String path = "http://127.0.0.1/dvwa/vulnerabilities/sqli/";
 		InputDiscovery discoverInputs = new InputDiscovery();
-		//discoverInputs.discover(webClient, path);
 		
-		onSiteLinks.remove(0);
+		onSiteLinks.remove(0); //remove home page
+		System.out.println("before onsite size " + onSiteLinks);
 		//**********************Once log in, crawl through links on home page*********************
 		ListIterator<HtmlPage> itr = onSiteLinks.listIterator();
+		
 		while(itr.hasNext()){
 			HtmlPage htmlPage = itr.next();
 			currentUrl = getPageUrl(htmlPage.toString());
+			
 			if(!visitedPages.contains(htmlPage)) {
 				System.out.println("\nCrawling page: " + htmlPage);
 				visitedPages.add(htmlPage);
-				discoverLinks(webClient, htmlPage);
-				discoverInputs.discover(webClient, htmlPage);
+				
 				if (inputType == 2) {
 		        	int response = fTest.getHttpResponse(args[2]);
+		        	//System.out.println("Response code is "+ response);
 		        	if (response < 200 || response > 299) {
-		        		System.out.println("Response Code for " + currentUrl + "is not OK! Code: " + response);
+		        		System.out.println("	Response Code for " + currentUrl + "is not OK, something went wrong! Code: " + response);
+		        	}
+		        	
+		        	boolean DoSExist = fTest.checkResponseTime(htmlPage);
+		        	if(DoSExist == true){
+		        		System.out.println("	Delayed Response, potential DoS vulnerability at: " + htmlPage);
 		        	}
 				}
+				
+				discoverLinks(webClient, htmlPage);
+				discoverInputs.discover(webClient, htmlPage);
+				//check for http response code for each url
+				
 				//useRemainingParams(args, webClient, htmlPage);
 			}
-			System.out.println("On site page " + onSiteLinks.size());
+			System.out.println("On site page " + onSiteLinks);
 		}
 		
 		/*for (HtmlPage htmlPage : onSiteLinks) {
@@ -116,7 +127,7 @@ public class BasicFuzzer {
 				System.out.println("		Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
 				dwvaLink = link;
 			}
-			else if(!link.getHrefAttribute().contains("http://")){
+			else if(!link.getHrefAttribute().contains("http://")){ //link on dwva page
 				System.out.println("		Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
 				HtmlPage page1 = webClient.getPage("http://127.0.0.1/dvwa/"+link.getHrefAttribute());
 				onSiteLinks.add(page1);

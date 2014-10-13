@@ -5,6 +5,14 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
+/**
+ * Fuzz testing class.
+ * Checks for http response code
+ * @author Anshul
+ *
+ */
 public class FuzzTester {
 	
 	private URL url;
@@ -14,8 +22,8 @@ public class FuzzTester {
 	
 	/**
 	 * Gets the response code from the given url
-	 * @param urlParam
-	 * @return
+	 * @param urlParam url 
+	 * @return int response code
 	 */
 	public int getHttpResponse(String urlParam) {
 		int code = 0;
@@ -29,11 +37,29 @@ public class FuzzTester {
 			connection = (HttpURLConnection)url.openConnection();
 			connection.setRequestMethod("GET");
 			connection.connect();
-			code = connection.getResponseCode();
+			code = connection.getResponseCode(); //get http response code
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return code;
+	}
+	
+	/**
+	 * Check for the page load time.
+	 * If the response takes longer than a pre-defined threshold, 
+	 * then there's a potential of a denial-of-service vulnerablity.
+	 * @param urlParam input url
+	 * @return boolean 
+	 */
+	public boolean checkResponseTime(HtmlPage page){
+		boolean DoSExist = false;
+		double avgTime = 6.5; // mean page load time
+		
+		double loadTime = (double)page.getWebResponse().getLoadTime();
+		//System.out.println("load time: "+loadTime);
+		if(loadTime > avgTime)
+			DoSExist = true;
+		return DoSExist;
 	}
 
 }
