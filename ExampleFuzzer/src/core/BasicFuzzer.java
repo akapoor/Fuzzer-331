@@ -7,9 +7,12 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Queue;
 import java.util.Scanner;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -22,17 +25,22 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public class BasicFuzzer {
 	
-	private static ArrayList<HtmlPage> onSiteLinks = new ArrayList<HtmlPage>();
-	private static ArrayList<HtmlPage> visitedPages = new ArrayList<HtmlPage>();
+	//private static List<HtmlPage> onSiteLinks = new CopyOnWriteArrayList<HtmlPage>();
+	private static Queue<HtmlPage> onSiteLinks = new LinkedList<HtmlPage>();
+	private static List<HtmlPage> visitedPages = new ArrayList<HtmlPage>();
 	private static FuzzTester fTest;
 	
 	static HtmlAnchor dwvaLink = null;
 	static HtmlPage homePage = null;
 
-	public static void main(String[] args) throws MalformedURLException, IOException {
+	public static void main(String[] args) throws MalformedURLException, IOException, FailingHttpStatusCodeException {
 		String currentUrl;
 		WebClient webClient = new WebClient();
 		webClient.setJavaScriptEnabled(true);
+		
+		//webClient.setThrowExceptionOnFailingStatusCode(false);
+		//webClient.setThrowExceptionOnScriptError(false);
+		
 		int inputType = getInputType(args);
 		webClient.getCookieManager().clearCookies();
 		
@@ -68,18 +76,19 @@ public class BasicFuzzer {
 		InputDiscovery discoverInputs = new InputDiscovery();
 		
 		onSiteLinks.remove(0); //remove home page
-		System.out.println("before onsite size " + onSiteLinks);
 		//**********************Once log in, crawl through links on home page*********************
-		ListIterator<HtmlPage> itr = onSiteLinks.listIterator();
-		
-		while(itr.hasNext()){
-			HtmlPage htmlPage = itr.next();
+
+		HtmlPage htmlPage = null;
+		int i = 1;
+		while(!onSiteLinks.isEmpty() && i<19){
+			htmlPage = onSiteLinks.peek(); //get the first element in queue
 			currentUrl = getPageUrl(htmlPage.toString());
 			
 			if(!visitedPages.contains(htmlPage)) {
 				System.out.println("\nCrawling page: " + htmlPage);
 				visitedPages.add(htmlPage);
 				
+				//Check for vulnerabilities
 				if (inputType == 2) {
 		        	int response = fTest.getHttpResponse(args[2]);
 		        	//System.out.println("Response code is "+ response);
@@ -89,22 +98,21 @@ public class BasicFuzzer {
 		        	
 		        	boolean DoSExist = fTest.checkResponseTime(htmlPage);
 		        	if(DoSExist == true){
-		        		System.out.println("	Delayed Response, potential DoS vulnerability at: " + htmlPage);
+		        		System.out.println("Delayed Response, potential DoS vulnerability at: " + htmlPage);
 		        	}
 				}
-				
+				onSiteLinks.remove(); //remove the head of queue
 				discoverLinks(webClient, htmlPage);
 				discoverInputs.discover(webClient, htmlPage);
-				//check for http response code for each url
 				
-				//useRemainingParams(args, webClient, htmlPage);
 			}
-			System.out.println("On site page " + onSiteLinks);
+			//System.out.println("# of onsite urls:  " + onSiteLinks.size());
+			//System.out.println("# of visited pages:  " + visitedPages.size());
+			i++;
 		}
 		
-		/*for (HtmlPage htmlPage : onSiteLinks) {
-			
-		}*/
+		
+		
 		webClient.closeAllWindows();
 	}
 
@@ -120,17 +128,34 @@ public class BasicFuzzer {
 	 * @throws MalformedURLException
 	 */
 	private static void discoverLinks(WebClient webClient, HtmlPage page) throws IOException, MalformedURLException {
+		HtmlPage page1 = null;
 		List<HtmlAnchor> links = page.getAnchors();
 		System.out.println("	Link Discovery at "+ page);
 		for (HtmlAnchor link : links) {
 			if( link.getHrefAttribute().equals("http://127.0.0.1/dvwa")){
-				System.out.println("		Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
+				System.out.println("		Link discovered: " + link.asText() + " @URL= " + link.getHrefAttribute());
 				dwvaLink = link;
 			}
 			else if(!link.getHrefAttribute().contains("http://")){ //link on dwva page
-				System.out.println("		Link discovered: " + link.asText() + " @URL=" + link.getHrefAttribute());
-				HtmlPage page1 = webClient.getPage("http://127.0.0.1/dvwa/"+link.getHrefAttribute());
-				onSiteLinks.add(page1);
+				String url = link.getHrefAttribute();
+				
+				if(url.contains("4C7B08C10000"))
+					break;
+				else{
+					if(url.substring(url.length()-1).equals(".")) //clear out url string
+						url = url.replace(url.substring(url.length()-1), "");
+					
+					if(!link.asText().equals("Home") && url.substring(0, 5).contains(".") && url.substring(0, 5).contains("/"))
+						url = url.replace(url.substring(0, 6), "");
+					
+					System.out.println("		Link discovered: " + link.asText() + " @URL= " + url);
+					
+					page1 = webClient.getPage("http://127.0.0.1/dvwa/" + url);
+					
+					if(page1 != null)
+						onSiteLinks.add(page1);
+				}
+				
 			}
 		}
 	}

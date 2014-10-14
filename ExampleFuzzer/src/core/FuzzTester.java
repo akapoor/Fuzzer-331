@@ -55,10 +55,12 @@ public class FuzzTester {
 		boolean DoSExist = false;
 		double avgTime = 6.5; // mean page load time
 		
-		double loadTime = (double)page.getWebResponse().getLoadTime();
-		//System.out.println("load time: "+loadTime);
-		if(loadTime > avgTime)
+		double loadTime = (double)page.getWebResponse().getLoadTime()/1000;
+		
+		if(loadTime > avgTime){
 			DoSExist = true;
+			System.out.print("	Load time: "+loadTime + " sec. "); //load time will be printed if it takes long time
+		}
 		return DoSExist;
 	}
 
