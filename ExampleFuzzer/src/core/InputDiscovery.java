@@ -18,7 +18,8 @@ import com.gargoylesoftware.htmlunit.util.Cookie;
 
 public class InputDiscovery {
 	
-	private ArrayList<HtmlInput> inputs = new ArrayList<HtmlInput>();
+	private static ArrayList<HtmlInput> inputs = new ArrayList<HtmlInput>();
+	private static HtmlElement submit;
 	
 	/**
 	 * Discover all inputs and cookies at a particular url
@@ -39,8 +40,6 @@ public class InputDiscovery {
 			}
 			for (HtmlElement e : form.getHtmlElementsByTagName("textarea")) {
 				System.out.println("		Input discovered " + e);
-				HtmlTextInput eIn = (HtmlTextInput)e;
-				inputs.add(eIn);
 			}
 			for (HtmlElement e : form.getHtmlElementsByTagName("password")) {
 				System.out.println("		Input discovered " + e);
@@ -61,6 +60,15 @@ public class InputDiscovery {
 	}
 	
 	public ArrayList<HtmlInput> getInputs() {
+		//System.out.println(inputs);
 		return inputs;
+	}
+	
+	public void setInputs() {
+		inputs.clear();
+	}
+	
+	public HtmlElement getSubmitButton(){
+		return submit;
 	}
 }

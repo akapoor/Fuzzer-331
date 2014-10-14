@@ -104,15 +104,16 @@ public class BasicFuzzer {
 				onSiteLinks.remove(); //remove the head of queue
 				discoverLinks(webClient, htmlPage);
 				discoverInputs.discover(webClient, htmlPage);
+				fTest.fuzzInputs(discoverInputs, htmlPage, "vectors.txt"); //fuzz inputs
+				fTest.checkDataLeak(htmlPage, "sensitive.txt");
+				discoverInputs.setInputs();
 				
 			}
 			//System.out.println("# of onsite urls:  " + onSiteLinks.size());
 			//System.out.println("# of visited pages:  " + visitedPages.size());
 			i++;
 		}
-		
-		
-		
+			
 		webClient.closeAllWindows();
 	}
 
