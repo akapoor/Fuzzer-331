@@ -20,9 +20,12 @@ discover/test needs to be second. test is not yet implemented
 PART 2
 ******
 
-Type this exactly in command line:
+***************************HOW TO RUN .JAR FILE***************************
 
-fuzz test http://127.0.0.1  --custom-auth=dvwa --common-words=words.txt --vectors=vectors.txt --sensitive=sensitive.txt --random=false
+Navigate to root level where Fuzzer_Part2,jar is, and type the exact following command:
+
+java -jar Fuzzer_Part2.jar fuzz test http://127.0.0.1  --custom-auth=dvwa --common-words=words.txt --vectors=vectors.txt --sensitive=sensitive.txt --random=false
+
 
 Delayed Response: Average of 6.5 seconds is taken as a standard web page load time. If the load time is greater than this, then DoS warning is given.
 HTTP Response Codes: Any response code that is not 200, is considered a bad response code and is warned to the user.
